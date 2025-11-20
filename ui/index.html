@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Pack Calculator UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            max-width: 600px;
+        }
+        input, button {
+            padding: 8px;
+            margin: 6px 0;
+            font-size: 16px;
+        }
+        button {
+            cursor: pointer;
+        }
+        .box {
+            border: 1px solid #aaa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Pack Calculator Demo</h1>
+
+<!-- CURRENT PACK SIZES -->
+<div class="box">
+    <h3>Current Pack Sizes</h3>
+    <button onclick="loadPackSizes()">Load Pack Sizes</button>
+
+    <pre id="currentSizes">Click "Load Pack Sizes"</pre>
+</div>
+
+<!-- UPDATE PACK SIZES -->
+<div class="box">
+    <h3>Update Pack Sizes</h3>
+
+    <label>Pack sizes (comma separated):</label><br/>
+    <input type="text" id="sizesInput" placeholder="e.g. 23,31,53" style="width:100%">
+
+    <button onclick="updatePackSizes()">Update</button>
+
+    <pre id="updateOutput"></pre>
+</div>
+
+<div class="box">
+    <h3>Calculate Packs</h3>
+
+    <label>Amount:</label><br/>
+    <input type="number" id="amountInput" placeholder="e.g. 500000" style="width:100%">
+
+    <button onclick="calculate()">Calculate</button>
+
+    <pre id="calcOutput"></pre>
+</div>
+
+<script>
+    const baseUrl = window.location.origin;
+    const MAX_AMOUNT = 5000000;
+
+    async function loadPackSizes() {
+        const res = await fetch(baseUrl + "/packsizes");
+        const data = await res.json();
+        document.getElementById("currentSizes").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function updatePackSizes() {
+        const raw = document.getElementById("sizesInput").value;
+        const arr = raw.split(",").map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+
+        const res = await fetch(baseUrl + "/packsizes", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ packSizes: arr })
+        });
+
+        const data = await res.json();
+        document.getElementById("updateOutput").textContent = JSON.stringify(data, null, 2);
+
+        loadPackSizes();
+    }
+
+    async function calculate() {
+        const amount = parseInt(document.getElementById("amountInput").value);
+
+        if (isNaN(amount) || amount <= 0) {
+            document.getElementById("calcOutput").textContent =
+                "❌ Invalid amount. Please enter a positive number.";
+            return;
+        }
+
+        if (amount > MAX_AMOUNT) {
+            document.getElementById("calcOutput").textContent =
+                `❌ Amount too large. Max supported is ${MAX_AMOUNT}.`;
+            return;
+        }
+        
+        const res = await fetch(baseUrl + "/calculate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ amount })
+        });
+
+        const data = await res.json();
+        document.getElementById("calcOutput").textContent = JSON.stringify(data, null, 2);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  pack_calculator:
+    build: .
+    container_name: pack_calculator
+    ports:
+      - "80:80"
+    environment:
+      - PORT=80
